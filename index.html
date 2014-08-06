@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+    <title>Dallr Chat</title>
+    <style>
+        #chat{
+            height:500px;
+        }
+        /*#contentWrap{
+            display: none;
+        }*/
+        /*#chatWrap{
+            float: left;
+            border: 1px #666 solid;
+        }*/
+    </style>
+
+</head>
+<body>
+    <div id="chat"></div>
+    <form id="send-message">
+        <input id="message" size="35">
+        <input type="submit">
+    </form>
+
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+        jQuery(function($){
+            var socket = io.connect(); // we get from socket.io.js
+            var $messageForm = $('#send-message');
+            var $messageBox = $('#message');
+            var $chat = $('#chat');
+
+
+            // We bind eventhandler to messageForm, every time a message is submitted
+            // we send the message to the message server.
+            $messageForm.submit(function(e){
+                e.preventDefault(); //don't want to submit and refresh on submit
+                socket.emit('send message', $messageBox.val()); //Send an event to the server 1.parameter naming the event, 2. parameter is the data
+                $messageBox.val(''); //clear messageBox
+            });
+
+            //Receive message on client side
+            socket.on('new message', function(data){
+                $chat.append(data + '<br/>');
+            });
+
+        });
+
+    </script>
+</body>
+</html>

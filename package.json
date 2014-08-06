@@ -1,0 +1,22 @@
+{
+  "name": "nodeChat",
+  "version": "0.0.0",
+  "description": "Testing node",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnbrowe/nodeChat.git"
+  },
+  "author": "John Hoj Andreassen",
+  "license": "Apache License",
+  "bugs": {
+    "url": "https://github.com/johnbrowe/nodeChat/issues"
+  },
+    "dependencies": {
+        "socket.io": "1.0.*",
+        "express":"latest"
+    }
+}
