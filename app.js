@@ -15,6 +15,7 @@ app.get('/', function(req, res){
 
 // Receive event (server-side)
 // Like document ready function
+// Every user has it's own socket -> (function(socket)).
 io.sockets.on('connection', function(socket){
 
     //Listening for new user event
