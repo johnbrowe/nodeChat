@@ -44,7 +44,7 @@ io.sockets.on('connection', function(socket){
     socket.on('send message', function(data){
         //Handling data from send message
         //We are sending it to all users here
-        io.sockets.emit('new message', data);
+        io.sockets.emit('new message', {msg: data, nick: socket.nickname});
     });
 
 
