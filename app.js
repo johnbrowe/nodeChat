@@ -20,7 +20,7 @@ io.sockets.on('connection', function(socket){
     //Listening for new user event
     //Callback parameter to send valid state data back to client
     //Sent back to function(data) in new user eventlistener
-    socket.on('new user', function(data, callback){
+    /*socket.on('new user', function(data, callback){
 
         //If nickname is not
         if(nicknames.indexOf(data) != -1){
@@ -32,7 +32,7 @@ io.sockets.on('connection', function(socket){
             io.sockets.emit('usernames', nicknames); // Sending array with nicknames to all sockets
 
         }
-    });
+    });*/
 
     //Listening for send message event
     socket.on('send message', function(data){
