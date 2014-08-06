@@ -6,22 +6,38 @@
         #chat{
             height:500px;
         }
-        /*#contentWrap{
+        #contentWrap{
             display: none;
-        }*/
-        /*#chatWrap{
+        }
+        #chatWrap{
             float: left;
             border: 1px #666 solid;
-        }*/
+        }
     </style>
 
 </head>
 <body>
-    <div id="chat"></div>
-    <form id="send-message">
-        <input id="message" size="35">
-        <input type="submit">
-    </form>
+    <!-- NickeName -->
+    <div id="nickWrap">
+        <p>enter a name</p>
+        <p id="nickError"></p>
+        <form id="setNick">
+            <input id="nickname" size="35">
+            <input type="submit">
+        </form>
+    </div>
+
+    <!-- CHAT -->
+    <div id="contentWrap">
+        <div id="chatWrap">
+            <div id="chat"></div>
+            <form id="send-message">
+                <input id="message" size="35">
+                <input type="submit">
+            </form>
+        </div>
+        <div id="users"></div>
+    </div>
 
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -29,10 +45,35 @@
 
         jQuery(function($){
             var socket = io.connect(); // we get from socket.io.js
+            var $nickForm = $('#setNick');
+            var $nickError = $('#nickError');
+            var $nickBox = $('#nickname');
             var $messageForm = $('#send-message');
             var $messageBox = $('#message');
             var $chat = $('#chat');
 
+
+            //Add an eventhandler to nickForm on submit
+            $nickForm.submit(function(e){
+                e.preventDefault();
+
+                //Send an event to the server
+                // 1. parameter naming the event
+                // 2. parameter is the data
+                // 3. parameter is checking if username is valid (Callback)
+                // If valid show chat if not display error message
+                socket.emit('new user', $nickBox.val(), function(data){
+                    //data is from callback new user true or false
+                    //if username is valid
+                    if(data){
+                        $('#nickWrap').hide();
+                        $('#contentWrap').show();
+                    } else {
+                        $nickError.html('Name already taken');
+                    }
+                });
+                $nickBox.val('');
+            });
 
             // We bind eventhandler to messageForm, every time a message is submitted
             // we send the message to the message server.
