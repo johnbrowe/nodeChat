@@ -3,6 +3,7 @@ var express = require('express'),
     server = require('http').createServer(app), //Create server object
     io = require('socket.io').listen(server), //Socket functionality which listens to the http server object
     mongoose = require('mongoose'),
+    crypto = require('crypto'),
     // Keeping track of nicknames as objects, as well as being able to reference the single socket object so we can send to specific user sockets.
     // Nickname will be the key to the users object and the values will be the sockets
     users = {};
@@ -43,6 +44,9 @@ app.get('/', function(req, res){
 // Like document ready function
 // Every user has it's own socket -> (function(socket)).
 io.sockets.on('connection', function(socket){
+    //Create a random id for socket
+    var cryptoID = crypto.randomBytes(20).toString('hex');
+    console.log(cryptoID);
 
     //Grabb earlier messages when logged on
     query = Chat.find({});
