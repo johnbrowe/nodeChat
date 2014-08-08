@@ -17,6 +17,7 @@
   },
     "dependencies": {
         "socket.io": "1.0.*",
-        "express":"latest"
+        "express":"latest",
+        "mongoose": "*"
     }
 }

@@ -1,7 +1,6 @@
-<!doctype html>
 <html>
 <head>
-    <title>Dallr Chat</title>
+    <title>Chat with socket.io and node.js</title>
     <style>
         #chat{
             height:500px;
@@ -11,116 +10,120 @@
         }
         #chatWrap{
             float: left;
-            border: 1px #666 solid;
+            border: 1px #000 solid;
         }
         .error{
             color: red;
         }
         .whisper{
-            color: #d5d5d5;
-        }
-        .msg{
-            color: #000000;
+            color: gray;
+            font-style: italic;
         }
     </style>
-
 </head>
 <body>
-    <!-- NickeName -->
-    <div id="nickWrap">
-        <p>enter a name</p>
-        <p id="nickError"></p>
-        <form id="setNick">
-            <input id="nickname" size="35">
-            <input type="submit">
+<div id="nickWrap">
+    <p>Enter a username:</p>
+    <p id="nickError"></p>
+    <form id="setNick">
+        <input size="35" id="nickname"></input>
+        <input type="submit"></input>
+    </form>
+</div>
+
+<div id="contentWrap">
+    <div id="chatWrap">
+        <div id="chat"></div>
+        <form id="send-message">
+            <input size="35" id="message"></input>
+            <input type="submit"></input>
         </form>
     </div>
+    <div id="users"></div>
+</div>
 
-    <!-- CHAT -->
-    <div id="contentWrap">
-        <div id="chatWrap">
-            <div id="chat"></div>
-            <form id="send-message">
-                <input id="message" size="35">
-                <input type="submit">
-            </form>
-        </div>
-        <div id="users"></div>
-    </div>
+<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    jQuery(function($){
+        var socket = io.connect(); // we get from socket.io.js
+        var $nickForm = $('#setNick');
+        var $nickError = $('#nickError');
+        var $nickBox = $('#nickname');
+        var $users = $('#users');
+        var $messageForm = $('#send-message');
+        var $messageBox = $('#message');
+        var $chat = $('#chat');
 
-    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
+        //Add an eventhandler to nickForm on submit
+        $nickForm.submit(function(e){
+            e.preventDefault();
 
-        jQuery(function($){
-            var socket = io.connect(); // we get from socket.io.js
-            var $nickForm = $('#setNick');
-            var $nickError = $('#nickError');
-            var $nickBox = $('#nickname');
-            var $users = $('#users');
-            var $messageForm = $('#send-message');
-            var $messageBox = $('#message');
-            var $chat = $('#chat');
-
-
-            //Add an eventhandler to nickForm on submit
-            $nickForm.submit(function(e){
-                e.preventDefault();
-
-                //Send an event to the server
-                // 1. parameter naming the event
-                // 2. parameter is the data
-                // 3. parameter is checking if username is valid (Callback)
-                // If valid show chat if not display error message
-                socket.emit('new user', $nickBox.val(), function(data){
-                    //data is from callback new user true or false
-                    //if username is valid
-                    if(data){
-                        $('#nickWrap').hide();
-                        $('#contentWrap').show();
-                    } else {
-                        $nickError.html('Name already taken');
-                    }
-                });
-                $nickBox.val('');
-            });
-
-            //Display users - usernames eventlistener
-            socket.on('usernames', function(data){
-                var html = '';
-                for(i = 0; i < data.length; i++){
-                    html += data[i] + '<br/>';
+            //Send an event to the server
+            // 1. parameter naming the event
+            // 2. parameter is the data
+            // 3. parameter is checking if username is valid (Callback)
+            // If valid show chat if not display error message
+            socket.emit('new user', $nickBox.val(), function(data){
+                //data is from callback new user true or false
+                //if username is valid
+                if(data){
+                    $('#nickWrap').hide();
+                    $('#contentWrap').show();
+                } else{
+                    $nickError.html('That username is already taken!  Try again.');
                 }
-                $users.html(html);
             });
-
-            // We bind eventhandler to messageForm, every time a message is submitted
-            // we send the message to the message server.
-            $messageForm.submit(function(e){
-                e.preventDefault(); //don't want to submit and refresh on submit
-
-                //Send an event to the server
-                // 1.parameter naming the event
-                // 2. parameter is the data
-                // 3. Callback from
-                socket.emit('send message', $messageBox.val(), function(data){
-                    $chat.append('<span class="error">' + data + '</span><br/>');
-                });
-                $messageBox.val(''); //clear messageBox
-            });
-
-            // Receive message on client side
-            socket.on('new message', function(data){
-                $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + '</span><br/>');
-            });
-
-            // Receive private/whisper message
-            socket.on('whisper', function(){
-                $chat.append('<span class="whisper"><b>' + data.nick + ': </b>' + data.msg + '</span><br/>');
-            });
-
+            $nickBox.val('');
         });
 
-    </script>
+        //Display users - usernames eventlistener
+        socket.on('usernames', function(data){
+            var html = '';
+            for(i=0; i < data.length; i++){
+                html += data[i] + '<br/>'
+            }
+            $users.html(html);
+        });
+
+        // We bind eventhandler to messageForm, every time a message is submitted
+        // we send the message to the message server.
+        $messageForm.submit(function(e){
+            e.preventDefault();
+
+            //Send an event to the server
+            // 1.parameter naming the event
+            // 2. parameter is the data
+            // 3. Callback from
+            socket.emit('send message', $messageBox.val(), function(data){
+                $chat.append('<span class="error">' + data + "</span><br/>");
+            });
+            $messageBox.val(''); //clear messageBox
+        });
+
+        // Receive all messages on connection
+        socket.on('load old message', function(docs){
+            for(i = 0; i < docs.length; i++){
+                displayMsg(docs[i]);
+            }
+        });
+
+        // Receive message on client side
+        socket.on('new message', function(data){
+            displayMsg(data);
+        });
+
+        // Receive private/whisper message
+        socket.on('whisper', function(data){
+            $chat.append('<span class="whisper"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+        });
+
+
+        // Function for displaying messages
+        function displayMsg(data){
+            $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+        }
+    });
+</script>
 </body>
 </html>
