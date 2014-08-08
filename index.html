@@ -103,7 +103,9 @@
 
         // Receive all messages on connection
         socket.on('load old message', function(docs){
-            for(i = 0; i < docs.length; i++){
+
+            // Looping the array the other way
+            for(var i = docs.length - 1; i >= 0; i--){
                 displayMsg(docs[i]);
             }
         });

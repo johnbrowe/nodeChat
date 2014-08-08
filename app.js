@@ -45,7 +45,8 @@ app.get('/', function(req, res){
 io.sockets.on('connection', function(socket){
 
     //Grabb earlier messages when logged on
-    Chat.find({}, function(err, docs){
+    query = Chat.find({});
+    query.sort('-created').limit(8).exec(function(err, docs){
         if(err){
             throw err;
         } else {
