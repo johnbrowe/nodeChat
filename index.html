@@ -32,6 +32,9 @@
 </div>
 
 <div id="contentWrap">
+    <select id="availableUsers" name="selector">
+        <option value="">All</option>
+    </select>
     <div id="chatWrap">
         <div id="chat"></div>
         <form id="send-message">
@@ -54,6 +57,10 @@
         var $messageForm = $('#send-message');
         var $messageBox = $('#message');
         var $chat = $('#chat');
+        //Selecting users for private chat
+        var $usersSelection = $('#availableUsers');
+        var selectedUser = null;
+        var id = null;
 
         //Add an eventhandler to nickForm on submit
         $nickForm.submit(function(e){
@@ -80,10 +87,14 @@
         //Display users - usernames eventlistener
         socket.on('usernames', function(data){
             var html = '';
-            for(i=0; i < data.length; i++){
-                html += data[i] + '<br/>'
+
+            for(var key in data){
+                console.log(key);
+                $usersSelection.append("<option value='"+ data[key] +"'>" + key + "</option>");
+                //html += data.users[i] + '<br/>'
             }
-            $users.html(html);
+            //$users.html(html);
+
         });
 
         // We bind eventhandler to messageForm, every time a message is submitted
@@ -125,6 +136,13 @@
         function displayMsg(data){
             $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
         }
+
+        // Get select value
+        var okkurt = $usersSelection.val();
+        //console.log($('select[name=selector]').val());
+        $('select').change(function() {
+            console.log($(this).val());
+        });
     });
 </script>
 </body>

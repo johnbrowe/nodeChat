@@ -70,13 +70,22 @@ io.sockets.on('connection', function(socket){
         } else{
             callback(true);
             socket.nickname = data; //Saving the nickname to the socket it self -> now it is a property of the socket
+            socket.userID = cryptoID;
             users[socket.nickname] = socket;
             updateNicknames(); // Sending updated array with nicknames to all sockets
         }
     });
 
     function updateNicknames(){
-        io.sockets.emit('usernames', Object.keys(users)); // Sending object keys to the client instead of sending the whole socket object
+
+        // Creating an object with name and userID/cryptoID, instead of sending the whole socket object.
+        var usersInfo = {};
+        for (var key in users) {
+            var tempKey = key;
+            usersInfo[tempKey] = users[key].userID;
+        }
+
+        io.sockets.emit('usernames', usersInfo); // Sending object keys to the client instead of sending the whole socket object
     }
 
     //Listening for send message event
