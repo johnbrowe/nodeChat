@@ -24,15 +24,27 @@ mongoose.connect('mongodb://localhost/nodeChat', function(err){
 var chatSchema = mongoose.Schema({
     nick: String,
     msg: String,
+    msgTo: Number,
+    msgFrom: Number,
     created: {type: Date, default: Date.now}
 });
+
+var userSchema = mongoose.Schema({
+    userid: Number,
+    username: String,
+    password: String,
+    online: Number,
+    created: {type: Date, default: Date.now}
+});
+
+
 
 // Create model
 // Keep name singular -> it will be turned prural
 // 1. parameter name of collection/model
 // 2. parameter is the schema of the collection
 var Chat = mongoose.model('Message', chatSchema);
-
+var User = mongoose.model('User', userSchema);
 
 
 // Create route with express
@@ -63,36 +75,59 @@ io.sockets.on('connection', function(socket){
     //Callback parameter to send valid state data back to client
     //Sent back to function(data) in new user eventlistener
     socket.on('new user', function(data, callback){
+        var nameSame = '';
 
-        //If nickname is available
-        if (data in users){
-            callback(false);
-        } else{
-            callback(true);
-            socket.nickname = data; //Saving the nickname to the socket it self -> now it is a property of the socket
-            socket.userID = cryptoID;
-            users[socket.nickname] = socket;
-            updateNicknames(); // Sending updated array with nicknames to all sockets
-        }
+        //Check if user is in database
+        //This is a login without password for
+        //simulating real users
+        var userIsInDB = User.find({});
+
+        userIsInDB.findOne({username: data}, function(err, user) {
+            if (err) return console.error(err);
+
+            user.online = 1;
+            user.save(function(err) {
+                if (err) { return next(err); }
+            });
+
+        });
+
+        userIsInDB.findOne({username: data}, function(err, user) {
+            if (err) return console.error(err);
+
+            //If user is in database
+            if(user != null){
+                callback(true);
+                socket.nickname = data; //Saving the nickname to the socket it self -> now it is a property of the socket
+                socket.userID = cryptoID;
+                users[socket.nickname] = socket;
+                updateNicknames(); // Sending updated array with nicknames to all sockets
+            } else {
+                callback(false);
+            }
+        });
+
     });
+
 
     function updateNicknames(){
 
-        // Creating an object with name and userID/cryptoID, instead of sending the whole socket object.
-        var usersInfo = {};
-        for (var key in users) {
-            var tempKey = key;
-            usersInfo[tempKey] = users[key].userID;
-        }
+        //Grabb users to display
+        userQuery = User.find({});
 
-        io.sockets.emit('usernames', usersInfo); // Sending object keys to the client instead of sending the whole socket object
+        userQuery.find({}, function(err, users) {
+            if (err) return console.error(err);
+            io.sockets.emit('usernames', users); // Sending object keys to the client instead of sending the whole socket object
+        });
+
+
     }
 
     //Listening for send message event
     socket.on('send message', function(data, callback){
         // Private message "listener".
-        var msg = data.trim(); // trimming if user has put white space as first characters
-        console.log('after trimming message is: ' + msg);
+
+        var msg = data['newMessage'].trim(); // trimming if user has put white space as first characters
         if(msg.substr(0,3) === '/w '){
             msg = msg.substr(3); // We need the next letters
             var ind = msg.indexOf(' ');
@@ -106,26 +141,41 @@ io.sockets.on('connection', function(socket){
                     // this will later be changed to better listener
                     console.log('message sent is: ' + msg);
                     console.log('Whisper!');
-                } else{
+                } else {
                     //Handling data from send message
                     //We are sending it to all users here
                     callback('Error!  Enter a valid user.');
                 }
-            } else{
+            } else {
                 callback('Error!  Please enter a message for your whisper.');
             }
-        } else{
+        } else {
             // Create new document
             // Have set date to default now so we do not need to mention that
-            var newMsg = new Chat({msg: msg, nick: socket.nickname});
+            var newMsg = new Chat({msg: msg, nick: socket.nickname, msgFrom:0, msgTo:0});
             //Callback function for error
             newMsg.save(function(err){
                 if(err){
                     throw err;
                 }
             });
+
             io.sockets.emit('new message', {msg: msg, nick: socket.nickname});
         }
+    });
+
+    // Listening for selected user to message/chat with
+    socket.on('choose chatter', function(data){
+        console.log("Choose chatter: " + data);
+        var conversation = Chat.find({});
+
+        conversation.find({ $and: [ { msgTo: 1 }, { msgFrom: 2 } ]}, function(err, conv) {
+            if (err) return console.error(err);
+
+            console.log(conv);
+
+        });
+
     });
 
     //When a user disconnects
@@ -133,6 +183,17 @@ io.sockets.on('connection', function(socket){
         //To disconnect them if they wisit the site, but do not enter anything we want to disconnect them from the socket.
         if(!socket.nickname) return;
         delete users[socket.nickname];
+
+        var user = User.find({});
+
+        user.findOne({username: socket.nickname}, function(err, user) {
+            if (err) return console.error(err);
+
+            user.online = 0;
+            user.save(function(err) {
+                if (err) { return next(err); }
+            });
+        });
         updateNicknames(); // Send the new list to all sockets so get the new list of users
     });
 });

@@ -88,10 +88,15 @@
         socket.on('usernames', function(data){
 
             $usersSelection.empty();
-
-            for(var key in data){
-                console.log(key);
-                $usersSelection.append("<option value='"+ data[key] +"'>" + key + "</option>");
+            console.dir(data);
+            for(i = 0; i < data.length; i++){
+                var status = '';
+                if(data[i]['online'] == 1){
+                    status = "online";
+                } else {
+                    status = "offline";
+                }
+                $usersSelection.append("<option value='"+ data[i]['userid'] +"'>" + data[i]['username'] + " " + status + "</option>");
             }
 
         });
@@ -101,11 +106,18 @@
         $messageForm.submit(function(e){
             e.preventDefault();
 
+            var newMessage = {
+                userName: "Hans",
+                fromUser: "HansID",
+                toUser: "PeturID",
+                newMessage: $messageBox.val()
+            };
+
             //Send an event to the server
             // 1.parameter naming the event
             // 2. parameter is the data
             // 3. Callback from
-            socket.emit('send message', $messageBox.val(), function(data){
+            socket.emit('send message', newMessage, function(data){
                 $chat.append('<span class="error">' + data + '</span><br/>');
             });
             $messageBox.val(''); //clear messageBox
@@ -140,6 +152,16 @@
         var okkurt = $usersSelection.val();
         //console.log($('select[name=selector]').val());
         $('select').change(function() {
+
+            //Send an event to the server
+            // 1.parameter naming the event
+            // 2. parameter is the data
+            // 3. Callback from
+            socket.emit('choose chatter', $(this).val(), function(data){
+                //$chat.append('<span class="error">' + data + '</span><br/>');
+            });
+            $messageBox.val(''); //clear messageBox
+
             console.log($(this).val());
         });
     });
