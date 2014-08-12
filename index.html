@@ -61,6 +61,7 @@
         var $usersSelection = $('#availableUsers');
         var selectedUser = null;
         var id = null;
+        var sendTo = '';
 
         //Add an eventhandler to nickForm on submit
         $nickForm.submit(function(e){
@@ -106,30 +107,38 @@
         $messageForm.submit(function(e){
             e.preventDefault();
 
-            var newMessage = {
-                userName: "Hans",
-                fromUser: "HansID",
-                toUser: "PeturID",
-                newMessage: $messageBox.val()
-            };
+            if(sendTo != ''){
+                var newMessage = {
+                    toUser: sendTo,
+                    newMessage: $messageBox.val()
+                };
 
-            //Send an event to the server
-            // 1.parameter naming the event
-            // 2. parameter is the data
-            // 3. Callback from
-            socket.emit('send message', newMessage, function(data){
-                $chat.append('<span class="error">' + data + '</span><br/>');
-            });
-            $messageBox.val(''); //clear messageBox
+                //Send an event to the server
+                // 1.parameter naming the event
+                // 2. parameter is the data
+                // 3. Callback from
+                socket.emit('send message', newMessage, function(data){
+                    $chat.append('<span class="error">' + data + '</span><br/>');
+                });
+                $messageBox.val(''); //clear messageBox
+            } else {
+                $chat.append('<span class="error">You are messaging no one, not cool dude</span><br/>');
+            }
+
+
         });
 
         // Receive all messages on connection
         socket.on('load old message', function(docs){
 
+            // Empty chat before loading new chat content
+            $chat.empty();
+
             // Looping the array the other way
             for(var i = docs.length - 1; i >= 0; i--){
                 displayMsg(docs[i]);
             }
+
         });
 
         // Receive message on client side
@@ -145,6 +154,7 @@
 
         // Function for displaying messages
         function displayMsg(data){
+
             $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
         }
 
@@ -160,10 +170,14 @@
             socket.emit('choose chatter', $(this).val(), function(data){
                 //$chat.append('<span class="error">' + data + '</span><br/>');
             });
+
+            sendTo = $(this).val();
+
             $messageBox.val(''); //clear messageBox
 
-            console.log($(this).val());
         });
+
+
     });
 </script>
 </body>
