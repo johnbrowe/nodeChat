@@ -26,20 +26,20 @@
     <p>Enter a username:</p>
     <p id="nickError"></p>
     <form id="setNick">
-        <input size="35" id="nickname"></input>
-        <input type="submit"></input>
+        <input size="35" id="nickname">
+        <input type="submit">
     </form>
 </div>
 
 <div id="contentWrap">
-    <select id="availableUsers" name="selector">
+    <select id="availableUsers" name="selector" size="10">
         <option value="">All</option>
     </select>
     <div id="chatWrap">
         <div id="chat"></div>
         <form id="send-message">
-            <input size="35" id="message"></input>
-            <input type="submit"></input>
+            <input size="35" id="message">
+            <input type="submit">
         </form>
     </div>
     <div id="users"></div>
@@ -86,14 +86,13 @@
 
         //Display users - usernames eventlistener
         socket.on('usernames', function(data){
-            var html = '';
+
+            $usersSelection.empty();
 
             for(var key in data){
                 console.log(key);
                 $usersSelection.append("<option value='"+ data[key] +"'>" + key + "</option>");
-                //html += data.users[i] + '<br/>'
             }
-            //$users.html(html);
 
         });
 
@@ -107,7 +106,7 @@
             // 2. parameter is the data
             // 3. Callback from
             socket.emit('send message', $messageBox.val(), function(data){
-                $chat.append('<span class="error">' + data + "</span><br/>");
+                $chat.append('<span class="error">' + data + '</span><br/>');
             });
             $messageBox.val(''); //clear messageBox
         });

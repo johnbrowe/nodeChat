@@ -14,7 +14,7 @@ server.listen(3000);
 //Database connect
 mongoose.connect('mongodb://localhost/nodeChat', function(err){
     if(err){
-        console.log(err);
+        console.log("MongoDB: " + err);
     } else {
         console.log('DB connection successfull');
     }
