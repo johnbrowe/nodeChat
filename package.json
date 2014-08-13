@@ -19,5 +19,8 @@
         "socket.io": "1.0.*",
         "express":"latest",
         "mongoose": "*"
+    },
+    "engines": {
+        "node": "0.10.x"
     }
 }
