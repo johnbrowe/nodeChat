@@ -32,6 +32,7 @@
 </div>
 
 <div id="contentWrap">
+    <h1>Chatter: <span id="chatter"></span> </h1>
     <select id="availableUsers" name="selector" size="10">
         <option value="">All</option>
     </select>
@@ -67,20 +68,25 @@
         $nickForm.submit(function(e){
             e.preventDefault();
 
+            var catchName = $nickBox.val();
+
             //Send an event to the server
             // 1. parameter naming the event
             // 2. parameter is the data
             // 3. parameter is checking if username is valid (Callback)
             // If valid show chat if not display error message
             socket.emit('new user', $nickBox.val(), function(data){
+
                 //data is from callback new user true or false
                 //if username is valid
                 if(data){
                     $('#nickWrap').hide();
                     $('#contentWrap').show();
+                    $('#chatter').text(nikki);
                 } else{
                     $nickError.html('That username is already taken!  Try again.');
                 }
+
             });
             $nickBox.val('');
         });
