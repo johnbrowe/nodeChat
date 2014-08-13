@@ -70,7 +70,6 @@ io.sockets.on('connection', function(socket){
     //Callback parameter to send valid state data back to client
     //Sent back to function(data) in new user eventlistener
     socket.on('new user', function(data, callback){
-        var nameSame = '';
 
         //Check if user is in database
         //This is a login without password for
@@ -92,6 +91,8 @@ io.sockets.on('connection', function(socket){
 
             //If user is in database
             if(user != null){
+
+                console.dir(user);
 
                 callback(true);
                 socket.userID = user['userid']; //Saving the id to the socket it self -> now it is a property of the socket
@@ -116,7 +117,9 @@ io.sockets.on('connection', function(socket){
 
         userQuery.find({}, function(err, users) {
             if (err) return console.error(err);
+            console.log("1");
             io.sockets.emit('usernames', users); // Sending object keys to the client instead of sending the whole socket object
+            console.log("Sending usernames");
         });
 
 
