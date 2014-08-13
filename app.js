@@ -165,12 +165,12 @@ io.sockets.on('connection', function (socket) {
                 socket.emit('load old message', conv);
 
             });
-
     });
 
-    //When a user disconnects
+    // When a user disconnects
     socket.on('disconnect', function (data) {
-        //To disconnect them if they wisit the site, but do not enter anything we want to disconnect them from the socket.
+
+        // To disconnect them if they wisit the site, but do not enter anything we want to disconnect them from the socket.
         if (!socket.nickname) return;
         delete users[socket.nickname];
 
@@ -187,10 +187,7 @@ io.sockets.on('connection', function (socket) {
                 updateNicknames(); // Send the new list to all sockets so get the new list of users
 
             });
-
         });
-
-
     });
 
     /*
