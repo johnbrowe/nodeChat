@@ -92,8 +92,6 @@ io.sockets.on('connection', function(socket){
             //If user is in database
             if(user != null){
 
-                console.dir(user);
-
                 callback(true);
                 socket.userID = user['userid']; //Saving the id to the socket it self -> now it is a property of the socket
                 socket.nickname = user['username']; //Saving the nickname to the socket it self -> now it is a property of the socket
@@ -110,28 +108,11 @@ io.sockets.on('connection', function(socket){
     });
 
 
-    function updateNicknames(){
-
-        //Grabb users to display
-        userQuery = User.find({});
-
-        userQuery.find({}, function(err, users) {
-            if (err) return console.error(err);
-            console.log("1");
-            io.sockets.emit('usernames', users); // Sending object keys to the client instead of sending the whole socket object
-            console.log("Sending usernames");
-        });
-
-
-    }
-
     //Listening for send message event
     socket.on('send message', function(data, callback){
         // Private message "listener".
 
         var msg = data['newMessage'].trim(); // trimming if user has put white space as first characters
-
-        console.dir(data);
 
         if(msg.substr(0,3) === '/w '){
             msg = msg.substr(3); // We need the next letters
@@ -173,8 +154,6 @@ io.sockets.on('connection', function(socket){
 
     // Listening for selected user to message/chat with
     socket.on('choose chatter', function(data){
-        console.log("Choose chatter: " + data);
-
 
         var conversation = Chat.find({});
 
@@ -208,12 +187,31 @@ io.sockets.on('connection', function(socket){
 
         user.findOne({username: socket.nickname}, function(err, user) {
             if (err) return console.error(err);
-
             user.online = 0;
             user.save(function(err) {
                 if (err) { return next(err); }
+
+                updateNicknames(); // Send the new list to all sockets so get the new list of users
+
             });
+
         });
-        updateNicknames(); // Send the new list to all sockets so get the new list of users
+
+
     });
+
+    /*
+     // Socket Functions
+     */
+    function updateNicknames() {
+        console.log("Update nicknames used");
+        //Grabb users to display
+        userQuery = User.find({});
+
+        userQuery.find({}, function (err, users) {
+            if (err) return console.error(err);
+            io.sockets.emit('usernames', users); // Sending object keys to the client instead of sending the whole socket object
+
+        });
+    }
 });
