@@ -90,6 +90,7 @@ io.sockets.on('connection', function (socket) {
                 /*socket.userID = cryptoID;*/
                 users[socket.nickname] = socket;
                 updateNicknames(); // Sending updated array with nicknames to all sockets
+                console.dir(user);
 
             } else {
                 callback(false);
