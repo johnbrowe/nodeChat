@@ -25,6 +25,7 @@ var chatSchema = mongoose.Schema({
     msg: String,
     msgTo: Number,
     msgFrom: Number,
+    unread: Number,
     created: {type: Date, default: Date.now}
 });
 
@@ -33,6 +34,7 @@ var userSchema = mongoose.Schema({
     username: String,
     password: String,
     online: Number,
+    newMsgCount: Number,
     created: {type: Date, default: Date.now}
 });
 
@@ -54,6 +56,8 @@ app.get('/', function (req, res) {
 // Like document ready function
 // Every user has it's own socket -> (function(socket)).
 io.sockets.on('connection', function (socket) {
+
+    updateUnread();
 
     //Listening for new user event
     //Callback parameter to send valid state data back to client
@@ -90,7 +94,7 @@ io.sockets.on('connection', function (socket) {
                 /*socket.userID = cryptoID;*/
                 users[socket.nickname] = socket;
                 updateNicknames(); // Sending updated array with nicknames to all sockets
-                console.dir(user);
+
 
             } else {
                 callback(false);
@@ -132,15 +136,16 @@ io.sockets.on('connection', function (socket) {
 
             // Create new document
             // Have set date to default now so we do not need to mention that
-            var newMsg = new Chat({msg: msg, nick: socket.nickname, msgFrom: socket.userID, msgTo: data['toUser']});
+            var newMsg = new Chat({msg: msg, nick: socket.nickname, msgFrom: socket.userID, msgTo: data['toUser'], unread: 1});
             //Callback function for error
             newMsg.save(function (err) {
                 if (err) {
                     throw err;
                 }
             });
-
+            updateUnread();
             io.sockets.emit('new message', {msg: msg, nick: socket.nickname});
+
         }
     });
 
@@ -177,8 +182,10 @@ io.sockets.on('connection', function (socket) {
 
         var user = User.find({});
 
-        user.findOne({username: socket.nickname}, function (err, user) {
+        user.count({username: socket.nickname}, function (err, user) {
             if (err) return console.error(err);
+
+            console.log(socket.nickname);
             user.online = 0;
             user.save(function (err) {
                 if (err) {
@@ -195,14 +202,50 @@ io.sockets.on('connection', function (socket) {
      // Socket Functions
      */
     function updateNicknames() {
-        console.log("Update nicknames used");
+
         //Grabb users to display
-        userQuery = User.find({});
+        var userQuery = User.find({});
 
         userQuery.find({}, function (err, users) {
             if (err) return console.error(err);
             io.sockets.emit('usernames', users); // Sending object keys to the client instead of sending the whole socket object
 
         });
+    }
+
+    function updateUnread() {
+
+        // Update unread message
+        // We search DB for unread msg
+        var unReadMsg = Chat.aggregate([
+            { $group: { _id: "$msgTo", messages: { $sum: "$unread" } } }
+        ], function (err, result) {
+            if (err) return console.error(err);
+            console.log(result);
+            io.sockets.emit('unreadMsg', result);
+        });
+
+        /*unReadMsg.aggregate([
+         { $group : { _id : "$msgTo", messages: { $sum: "$unread" }}}
+         ]);*/
+
+
+        /*for(var i = 0; i < 4; i++){
+         unReadMsg.find({unread:1, msgTo:i},function (err, unread) {
+
+         if (err) return console.error(err);
+
+         console.log(unread);
+         //io.sockets.emit('unreadMsg', result);
+         });
+         }*/
+
+        /*unReadMsg.find({unread:1, msgTo:socket.userID},function (err, unread) {
+         if (err) return console.error(err);
+
+         console.dir(unread);
+         //io.sockets.emit('unreadMsg', result);
+         });*/
+
     }
 });
