@@ -182,8 +182,11 @@
 
         });
 
+        // Sending a socket emit to the server to get the newest unread stats on an interval
         setInterval(callUpdateRead, 5000)
 
+        // Socket emit function which only call the server to
+        // get a callback with the unread stats
         function callUpdateRead() {
 
             console.log($('#chatter').text());
@@ -198,12 +201,12 @@
             });
         }
 
+        //Send an event to the server
+        // 1.parameter naming the event
+        // 2. parameter is the data
+        // 3. Callback from
         $('select').change(function() {
 
-            //Send an event to the server
-            // 1.parameter naming the event
-            // 2. parameter is the data
-            // 3. Callback from
             socket.emit('choose chatter', $(this).val(), function(data){
                 //$chat.append('<span class="error">' + data + '</span><br/>');
             });
@@ -213,8 +216,6 @@
             $messageBox.val(''); //clear messageBox
 
         });
-
-
     });
 </script>
 </body>

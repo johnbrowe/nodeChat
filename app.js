@@ -145,6 +145,16 @@ io.sockets.on('connection', function (socket) {
 
         var conversation = Chat.find({});
 
+        conversation.update(
+            { msgTo: socket.userID, msgFrom: data  },
+            { $set: { unread: 0 } },
+            { multi: true }, function (err) {
+                if (err) {
+                    throw err;
+                }
+            }
+        )
+
         // Find specific conversation between user id's
         //query.sort('-created').limit(8).exec(function(err, docs){
         conversation.find({ $or: [
@@ -190,8 +200,6 @@ io.sockets.on('connection', function (socket) {
 
 
     socket.on('updateUnread', function (data, callback) {
-
-        console.log(data);
 
         if (data != '') {
             var unReadMsg = Chat.aggregate([
