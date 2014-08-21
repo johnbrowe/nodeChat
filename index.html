@@ -64,6 +64,7 @@
         var id = null;
         var sendTo = '';
 
+
         //Add an eventhandler to nickForm on submit
         $nickForm.submit(function(e){
             e.preventDefault();
@@ -149,30 +150,8 @@
 
         // Receive message on client side
         socket.on('new message', function(data){
+
             displayMsg(data);
-        });
-
-        // Listen for unread update on client side
-        socket.on('unreadMsg', function (data) {
-            $('.unr').remove();
-            console.log("UNREAD DATA -------------------------------------------------------------------------")
-
-            console.dir(data);
-
-            /*console.dir($("option"));*/
-            var options = $("option");
-            for (var i = 0; i < data.length; i++) {
-
-                console.log(data[i]['_id']);
-
-                $("option").each(function () {
-                    if ($(this).val() == data[i]['_id']) { // EDITED THIS LINE
-                        console.log("This: " + $(this).val() + "data: " + data[i]['_id']);
-                        $(this).append("<p class='unr'>" + data[i]['messages'] + "</p>");
-                    }
-                });
-            }
-
 
         });
 
@@ -181,16 +160,44 @@
             $chat.append('<span class="whisper"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
         });
 
+        // Receive private/whisper message
+        /*socket.on('tester', function(data){
+         console.log("HELLLO");
+         $("body").append("Helllllllllllllllllpo");
+         });*/
+
 
         // Function for displaying messages
         function displayMsg(data){
 
             $chat.append('<span class="msg"><b>' + data.nick + ': </b>' + data.msg + "</span><br/>");
+
         }
 
-        // Get select value
-        var okkurt = $usersSelection.val();
-        //console.log($('select[name=selector]').val());
+
+        // Listen for unread update on client side
+        socket.on('unreadMsg', function (data) {
+
+            callUpdateRead();
+
+        });
+
+        setInterval(callUpdateRead, 5000)
+
+        function callUpdateRead() {
+
+            console.log($('#chatter').text());
+
+            socket.emit('updateUnread', $('#chatter').text(), function (message) {
+                $('.unr').remove();
+                for (var i = 0; i < message.length; i++) {
+
+                    $('#availableUsers > option[value=' + message[i]['_id'] + ']').append('<p class="unr">' + message[i]['messages'] + '</p>');
+                }
+
+            });
+        }
+
         $('select').change(function() {
 
             //Send an event to the server

@@ -57,8 +57,6 @@ app.get('/', function (req, res) {
 // Every user has it's own socket -> (function(socket)).
 io.sockets.on('connection', function (socket) {
 
-    updateUnread();
-
     //Listening for new user event
     //Callback parameter to send valid state data back to client
     //Sent back to function(data) in new user eventlistener
@@ -69,16 +67,10 @@ io.sockets.on('connection', function (socket) {
         //simulating real users
         var userIsInDB = User.find({});
 
-        userIsInDB.findOne({username: data}, function (err, user) {
+        userIsInDB.update({username: data}, {$set: {online: 1}}, function (err, data) {
             if (err) return console.error(err);
 
-            user.online = 1;
-            user.save(function (err) {
-                if (err) {
-                    return next(err);
-                }
-            });
-
+            updateNicknames();
         });
 
         userIsInDB.findOne({username: data}, function (err, user) {
@@ -94,7 +86,7 @@ io.sockets.on('connection', function (socket) {
                 /*socket.userID = cryptoID;*/
                 users[socket.nickname] = socket;
                 updateNicknames(); // Sending updated array with nicknames to all sockets
-
+                updateUnread();
 
             } else {
                 callback(false);
@@ -143,7 +135,6 @@ io.sockets.on('connection', function (socket) {
                     throw err;
                 }
             });
-            updateUnread();
             io.sockets.emit('new message', {msg: msg, nick: socket.nickname});
 
         }
@@ -173,6 +164,50 @@ io.sockets.on('connection', function (socket) {
             });
     });
 
+    // Listen for if new message is received
+    socket.on('sent msg', function (data) {
+        console.log("Sent msg");
+        console.dir(data);
+    });
+
+    // On update read
+    socket.on('update unread', function (data) {
+
+        // To disconnect them if they wisit the site, but do not enter anything we want to disconnect them from the socket.
+        if (!socket.nickname) return;
+        delete users[socket.nickname];
+
+        var userInChat = User.find({});
+
+
+        userInChat.update({username: socket.nickname}, {$set: {online: 0}}, function (err, data) {
+            if (err) return console.error(err);
+
+            updateNicknames();
+        });
+
+    });
+
+
+    socket.on('updateUnread', function (data, callback) {
+
+        console.log(data);
+
+        if (data != '') {
+            var unReadMsg = Chat.aggregate([
+                { $match: { msgTo: socket.userID } },
+                { $group: { _id: "$msgFrom", messages: { $sum: "$unread" } }}
+            ], function (err, result) {
+                if (err) return console.error(err);
+
+                //users[socket.nickname].emit('unreadMsg', {messages: result});
+                callback(result);
+            });
+        }
+
+    });
+
+
     // When a user disconnects
     socket.on('disconnect', function (data) {
 
@@ -180,22 +215,15 @@ io.sockets.on('connection', function (socket) {
         if (!socket.nickname) return;
         delete users[socket.nickname];
 
-        var user = User.find({});
+        var userInChat = User.find({});
 
-        user.count({username: socket.nickname}, function (err, user) {
+
+        userInChat.update({username: socket.nickname}, {$set: {online: 0}}, function (err, data) {
             if (err) return console.error(err);
 
-            console.log(socket.nickname);
-            user.online = 0;
-            user.save(function (err) {
-                if (err) {
-                    return next(err);
-                }
-
-                updateNicknames(); // Send the new list to all sockets so get the new list of users
-
-            });
+            updateNicknames();
         });
+
     });
 
     /*
@@ -209,7 +237,6 @@ io.sockets.on('connection', function (socket) {
         userQuery.find({}, function (err, users) {
             if (err) return console.error(err);
             io.sockets.emit('usernames', users); // Sending object keys to the client instead of sending the whole socket object
-
         });
     }
 
@@ -218,34 +245,14 @@ io.sockets.on('connection', function (socket) {
         // Update unread message
         // We search DB for unread msg
         var unReadMsg = Chat.aggregate([
-            { $group: { _id: "$msgTo", messages: { $sum: "$unread" } } }
+            { $match: { msgTo: socket.userID } },
+            { $group: { _id: "$msgFrom", messages: { $sum: "$unread" } }}
         ], function (err, result) {
             if (err) return console.error(err);
-            console.log(result);
-            io.sockets.emit('unreadMsg', result);
+
+            users[socket.nickname].emit('unreadMsg', {messages: result});
+
         });
-
-        /*unReadMsg.aggregate([
-         { $group : { _id : "$msgTo", messages: { $sum: "$unread" }}}
-         ]);*/
-
-
-        /*for(var i = 0; i < 4; i++){
-         unReadMsg.find({unread:1, msgTo:i},function (err, unread) {
-
-         if (err) return console.error(err);
-
-         console.log(unread);
-         //io.sockets.emit('unreadMsg', result);
-         });
-         }*/
-
-        /*unReadMsg.find({unread:1, msgTo:socket.userID},function (err, unread) {
-         if (err) return console.error(err);
-
-         console.dir(unread);
-         //io.sockets.emit('unreadMsg', result);
-         });*/
 
     }
 });

@@ -18,7 +18,8 @@
     "dependencies": {
         "socket.io": "1.0.*",
         "express":"latest",
-        "mongoose": "*"
+        "mongoose": "*",
+        "mongowatch": "*"
     },
     "engines": {
         "node": "0.10.x"
